@@ -49,8 +49,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 40
-  lifetime: 5
-  damage: 3
+  lifetime: 10
+  damage: 5
   hitLayers:
     serializedVersion: 2
     m_Bits: 0
