@@ -2,19 +2,16 @@ using UnityEngine;
 
 public class EnemyZombie : MonoBehaviour
 {
-    [Header("Referenzen")]
     public GameObject player;
     public Animator animator; // Für spätere Animationen
     private CharacterController controller;
-    
-    [Header("Bewegung")]
+
     public float moveSpeed = 3f;
     public float attackDistance = 2f; // Abstand für Nahkampf-Angriff
     public float activationDistance = 20f; // Abstand ab dem der Zombie den Spieler bemerkt
     public float rotationSpeed = 5f; // Wie schnell sich Zombie dreht
     public float gravity = -9.81f; // Schwerkraft
     
-    [Header("Angriff")]
     public float attackDamage = 10f;
     public float attackCooldown = 1.5f; // Zeit zwischen Angriffen
     
@@ -26,24 +23,13 @@ public class EnemyZombie : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         
-        if (controller == null)
-        {
-            Debug.LogError("CharacterController fehlt auf " + gameObject.name);
-        }
     }
     
     void Update()
     {
-        // DEBUG: Prüfe ob Controller vorhanden ist
-        if (controller == null)
-        {
-            Debug.LogError("CharacterController fehlt!");
-            return;
-        }
+    
         
-        // Prüfen ob Spieler in Reichweite ist
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
-        Debug.Log("Distanz zum Spieler: " + distanceToPlayer + " | Aktiv: " + isActive);
         
         if (distanceToPlayer <= activationDistance)
         {
@@ -52,7 +38,7 @@ public class EnemyZombie : MonoBehaviour
         
         if (isActive)
         {
-            Debug.Log("Zombie ist AKTIV!");
+
             LookAtPlayer();
             ApplyGravity();
             
@@ -121,12 +107,10 @@ public class EnemyZombie : MonoBehaviour
         
         Vector3 direction = (player.transform.position - transform.position).normalized;
         direction.y = 0; // Keine Bewegung auf Y-Achse
-        
-        Debug.Log("Bewegungsrichtung: " + direction + " | Geschwindigkeit: " + moveSpeed);
+    
         
         // Bewegung mit CharacterController
         Vector3 movement = direction * moveSpeed * Time.deltaTime;
-        Debug.Log("Bewegung (movement): " + movement);
         controller.Move(movement);
     }
     

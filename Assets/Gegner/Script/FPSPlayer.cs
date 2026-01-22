@@ -35,6 +35,7 @@ public class FPSPlayer : MonoBehaviour
         xRotation = Mathf.Clamp(xRotation, -90f, 90f);
         playerCamera.localRotation = Quaternion.Euler(xRotation + recoilOffset, 0f, 0f);
         recoilOffset = Mathf.Lerp(recoilOffset, 0f, recoilReturnSpeed * Time.deltaTime);
+        
 
         transform.Rotate(Vector3.up * mouseX);
     	
