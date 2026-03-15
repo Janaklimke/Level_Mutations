@@ -1,39 +1,45 @@
 using UnityEngine;
+using System.Collections;
 
 public class EnemyZombie : MonoBehaviour
 {
     public GameObject player;
-    public Animator animator; // Für spätere Animationen
+    public GameObject Drops;
+    public Animator animator;
     private CharacterController controller;
+    
+    string bullet = "bullet";
 
     public float moveSpeed = 3f;
-    public float attackDistance = 2f; // Abstand für Nahkampf-Angriff
-    public float activationDistance = 20f; // Abstand ab dem der Zombie den Spieler bemerkt
-    public float rotationSpeed = 5f; // Wie schnell sich Zombie dreht
-    public float gravity = -9.81f; // Schwerkraft
+    public float attackDistance = 2f; //Abstand für Nahkampf-Angriff
+    public float activationDistance = 20f; //Abstand ab dem der Zombie den Spieler bemerkt
+    public float rotationSpeed = 5f; //Wie schnell sich Zombie dreht
+    public float gravity = -9.81f; //Schwerkraft
     
     public float attackDamage = 10f;
-    public float attackCooldown = 1.5f; // Zeit zwischen Angriffen
+    public float attackCooldown = 2f; //Zeit zwischen Angriffen
     
     private float attackTimer = 0;
     private bool isActive = false;
     private Vector3 verticalVelocity;
+
+    private float timer = 0f;
     
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        
     }
     
     void Update()
     {
-    
-        
+        timer += Time.deltaTime;
+
         float distanceToPlayer = Vector3.Distance(transform.position, player.transform.position);
         
         if (distanceToPlayer <= activationDistance)
         {
             isActive = true;
+            animator.SetTrigger("Rage");
         }
         
         if (isActive)
@@ -42,19 +48,15 @@ public class EnemyZombie : MonoBehaviour
             LookAtPlayer();
             ApplyGravity();
             
-            // Timer erhöhen
             attackTimer += Time.deltaTime;
             
-            // Prüfen ob Zombie nah genug zum Angreifen ist
             if (distanceToPlayer <= attackDistance)
             {
-                // Angreifen wenn Cooldown vorbei ist
                 if (attackTimer >= attackCooldown)
                 {
                     Attack();
                     attackTimer = 0;
                     
-                    // ANIMATION: Idle/Attack wechseln
                     if (animator != null)
                     {
                         animator.SetBool("IsWalking", false);
@@ -63,32 +65,43 @@ public class EnemyZombie : MonoBehaviour
             }
             else
             {
-                // Zum Spieler laufen wenn zu weit weg
                 MoveTowardsPlayer();
                 
-                // ANIMATION: Laufen
                 if (animator != null)
                 {
                     animator.SetBool("IsWalking", true);
                 }
             }
+
+            Damageable damageable = GetComponent<Damageable>();
+            if (timer >= 20)
+            {
+                Drop();
+                timer = 0;
+            }
         }
         else
         {
-            // ANIMATION: Idle wenn inaktiv
             if (animator != null)
             {
                 animator.SetBool("IsWalking", false);
             }
             
-            ApplyGravity(); // Schwerkraft auch wenn inaktiv
+            ApplyGravity();
         }
     }
     
+    void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("bullet"))
+        {
+            animator.SetTrigger("Hit");
+        }
+    }
     void LookAtPlayer()
     {
         Vector3 direction = (player.transform.position - transform.position).normalized;
-        direction.y = 0; // Nur horizontal drehen
+        direction.y = 0;
         
         if (direction != Vector3.zero)
         {
@@ -99,17 +112,11 @@ public class EnemyZombie : MonoBehaviour
     
     void MoveTowardsPlayer()
     {
-        if (controller == null)
-        {
-            Debug.LogError("Controller ist null!");
-            return;
-        }
         
         Vector3 direction = (player.transform.position - transform.position).normalized;
-        direction.y = 0; // Keine Bewegung auf Y-Achse
+        direction.y = 0;
     
         
-        // Bewegung mit CharacterController
         Vector3 movement = direction * moveSpeed * Time.deltaTime;
         controller.Move(movement);
     }
@@ -118,14 +125,13 @@ public class EnemyZombie : MonoBehaviour
     {
         if (controller == null) return;
         
-        // Schwerkraft anwenden
         if (controller.isGrounded)
         {
-            verticalVelocity.y = -2f; // Kleine negative Kraft um am Boden zu bleiben
+            verticalVelocity.y = -2f;
         }
         else
         {
-            verticalVelocity.y += gravity * Time.deltaTime; // Fallgeschwindigkeit erhöhen
+            verticalVelocity.y += gravity * Time.deltaTime;
         }
         
         controller.Move(verticalVelocity * Time.deltaTime);
@@ -133,33 +139,44 @@ public class EnemyZombie : MonoBehaviour
     
     void Attack()
     {
-        Debug.Log("Zombie greift an! Schaden: " + attackDamage);
-        
-        // ANIMATION: Angriff
         if (animator != null)
         {
             animator.SetTrigger("Attack");
         }
-        
-        // Schaden am Spieler verursachen
+
         PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
         if (playerHealth != null)
         {
-            playerHealth.TakeDamage(attackDamage);
+            StartCoroutine(Delay());
         }
     }
     
-    // CharacterController nutzt OnControllerColliderHit statt OnCollisionEnter
     void OnControllerColliderHit(ControllerColliderHit hit)
     {
         if (hit.gameObject == player)
         {
-            // Optional: Sofort angreifen bei Berührung
             if (attackTimer >= attackCooldown)
             {
                 Attack();
                 attackTimer = 0;
             }
         }
+    }
+
+    void Drop()
+    {
+        if (Drops != null)
+        {
+            Instantiate(Drops, transform.position, Quaternion.identity);
+            Instantiate(Drops, transform.position, Quaternion.identity);
+            Instantiate(Drops, transform.position, Quaternion.identity);
+        }
+    }
+
+    private IEnumerator Delay()
+    {
+        yield return new WaitForSeconds(2f);
+        PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
+        playerHealth.TakeDamage(attackDamage);
     }
 }
